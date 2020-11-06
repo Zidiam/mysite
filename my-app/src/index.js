@@ -4,7 +4,7 @@ import './index.css';
 
 function Square(props) {
   return (
-    <button className="square" onClick={props.onClick}>
+    <button className={lineofSquares(props.thesquares, props.spot)? 'square' : 'winsquare'} onClick={props.onClick}>
       {props.value}
     </button>
   );
@@ -14,6 +14,8 @@ class Board extends React.Component {
   renderSquare(i) {
     return (
       <Square
+          spot = {i}
+          thesquares = {this.props.squares}
         value={this.props.squares[i]}
         onClick={() => this.props.onClick(i)}
       />
@@ -23,21 +25,7 @@ class Board extends React.Component {
   render() {
     return (
       <div>
-        <div className="board-row">
-          {this.renderSquare(0)}
-          {this.renderSquare(1)}
-          {this.renderSquare(2)}
-        </div>
-        <div className="board-row">
-          {this.renderSquare(3)}
-          {this.renderSquare(4)}
-          {this.renderSquare(5)}
-        </div>
-        <div className="board-row">
-          {this.renderSquare(6)}
-          {this.renderSquare(7)}
-          {this.renderSquare(8)}
-        </div>
+        {createBoard(3, 3, this)}
       </div>
     );
   }
@@ -85,12 +73,32 @@ class Game extends React.Component {
     });
   }
 
+  order(oldorder) {
+    this.setState({
+      order: !oldorder
+    });
+  }
+
   render() {
     const history = this.state.history;
     const current = history[this.state.stepNumber];
     const winner = calculateWinner(current.squares);
+    let moves;
 
-    const moves = history.map((step, move) => {
+    if(this.state.order){
+      moves = history.map((step, move) => {
+      const desc = move ?
+        'Go to move #' + (history.length - move) + findrowcol(history[move].rowcol):
+        'Go to game start';
+      return (
+        <li key={move}>
+          <button className={this.state.stepNumber === (history.length-move) ? 'selected' : ''} onClick={() => this.jumpTo(history.length-move)}>{desc}</button>
+        </li>
+      );
+    });
+    }
+    else{
+      moves = history.map((step, move) => {
       const desc = move ?
         'Go to move #' + move + findrowcol(history[move].rowcol):
         'Go to game start';
@@ -100,6 +108,7 @@ class Game extends React.Component {
         </li>
       );
     });
+    }
 
     let status;
     if (winner) {
@@ -107,6 +116,15 @@ class Game extends React.Component {
     } else {
       status = "Next player: " + (this.state.xIsNext ? "X" : "O");
     }
+
+    let orderStr;
+    if(this.state.order){
+      orderStr = "Descending"
+    }
+    else{
+      orderStr = "Ascending"
+    }
+
 
     return (
       <div className="game">
@@ -118,7 +136,10 @@ class Game extends React.Component {
         </div>
         <div className="game-info">
           <div>{status}</div>
-          <ol>{moves}</ol>
+          <ol>
+            {moves}
+             <button onClick={() => this.order(this.state.order)}>{orderStr}</button>
+          </ol>
         </div>
       </div>
     );
@@ -128,6 +149,22 @@ class Game extends React.Component {
 // ========================================
 
 ReactDOM.render(<Game />, document.getElementById("root"));
+
+function createBoard(row, col, obj){
+  const items = []
+  let i;
+  let t;
+  let count = 0;
+  for (i = 0; i < row; i++) {
+    items.push(<div className="board-row"></div>)
+    for (t = 0; t < col; t++) {
+      items.push(obj.renderSquare(count))
+      count = count + 1
+    }
+  items.push(<div></div>)
+  }
+  return items
+}
 
 function findrowcol(index) {
   if(index === null){
@@ -160,6 +197,34 @@ function findrowcol(index) {
   if(index === 8){
     return "(2, 2)"
   }
+}
+
+function lineofSquares(squares, spot) {
+  let winningLine = 1;
+  const lines = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6]
+  ];
+  for (let i = 0; i < lines.length; i++) {
+    const [a, b, c] = lines[i];
+    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+      winningLine = lines[i];
+    }
+  }
+  if(winningLine !== 1) {
+    for (let i = 0; i < winningLine.length; i++) {
+      if (winningLine[i] !== spot) {
+        return true;
+      }
+    }
+  }
+  return false;
 }
 
 function calculateWinner(squares) {
