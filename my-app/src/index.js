@@ -4,7 +4,7 @@ import './index.css';
 
 function Square(props) {
   return (
-    <button className={lineofSquares(props.thesquares, props.spot)? 'square' : 'winsquare'} onClick={props.onClick}>
+    <button className={lineofSquares(props.thesquares, props.spot)? 'winsquare' : 'square'} onClick={props.onClick}>
       {props.value}
     </button>
   );
@@ -66,7 +66,11 @@ class Game extends React.Component {
     });
   }
 
-  jumpTo(step) {
+  jumpTo(step, max) {
+    if(step >= max){
+      step = 0
+    }
+
     this.setState({
       stepNumber: step,
       xIsNext: (step % 2) === 0
@@ -82,7 +86,8 @@ class Game extends React.Component {
   render() {
     const history = this.state.history;
     const current = history[this.state.stepNumber];
-    const winner = calculateWinner(current.squares);
+    let winner;
+    winner = calculateWinner(current.squares);
     let moves;
 
     if(this.state.order){
@@ -92,7 +97,7 @@ class Game extends React.Component {
         'Go to game start';
       return (
         <li key={move}>
-          <button className={this.state.stepNumber === (history.length-move) ? 'selected' : ''} onClick={() => this.jumpTo(history.length-move)}>{desc}</button>
+          <button className={this.state.stepNumber === (history.length-move) ? 'selected' : ''} onClick={() => this.jumpTo((history.length - move), history.length)}>{desc}</button>
         </li>
       );
     });
@@ -104,7 +109,7 @@ class Game extends React.Component {
         'Go to game start';
       return (
         <li key={move}>
-          <button className={this.state.stepNumber === move ? 'selected' : ''} onClick={() => this.jumpTo(move)}>{desc}</button>
+          <button className={this.state.stepNumber === move ? 'selected' : ''} onClick={() => this.jumpTo(move, history.length)}>{desc}</button>
         </li>
       );
     });
@@ -113,7 +118,11 @@ class Game extends React.Component {
     let status;
     if (winner) {
       status = "Winner: " + winner;
-    } else {
+    }
+    else if(this.state.history.length > 9){
+      status = "No Players Wins";
+    }
+    else {
       status = "Next player: " + (this.state.xIsNext ? "X" : "O");
     }
 
@@ -219,7 +228,7 @@ function lineofSquares(squares, spot) {
   }
   if(winningLine !== 1) {
     for (let i = 0; i < winningLine.length; i++) {
-      if (winningLine[i] !== spot) {
+      if (winningLine[i] === spot) {
         return true;
       }
     }
