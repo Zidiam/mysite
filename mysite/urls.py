@@ -6,7 +6,6 @@ from rest_framework.authtoken.admin import User
 from rest_framework.documentation import include_docs_urls
 from rest_framework.schemas import get_schema_view
 
-from quickstart import views
 from django.urls import path, include
 
 # Serializers define the API representation.
